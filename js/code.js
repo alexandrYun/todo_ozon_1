@@ -22,6 +22,7 @@ const field = document.querySelector(".input")
 let select = document.querySelector("select");
 let date_picker = document.getElementById("date_picker");
 const button_plus = document.querySelector(".button_plus");
+let deals = document.querySelector('#deals');
 
 
 /*
@@ -34,9 +35,10 @@ function addTask(){
     if(content === ""  || date_picker.value === ""){
         return;
     }
-    let todo = new Todo(select.value, content, date_picker.value);
+    let todo = new Todo(Number(select.value), content, date_picker.value);
     const todo_to_JSON  = JSON.stringify(todo);
     localStorage.setItem(String(+todo.dt), todo_to_JSON);
+    GenerateDom(todo);
     field.value = "";
     // дальше у нас будет сохрание в LocalStorage
 
@@ -71,7 +73,7 @@ draw_on_load();
 function GenerateDom(obj){
 deals.insertAdjacentHTML('afterbegin',
     `
-        <div class="wrap_task ${important_color[obj.color]} id=${+obj.dt}">
+        <div class="wrap_task ${important_color[obj.priority - 1]}" id="${+obj.dt}">
            <p class="todo_text"> ${obj.text} </p>
             <p> ${new Date(obj.dt).getDate()}/ ${new Date(obj.dt).getMonth()} / ${obj.dl}</p>
                 <i class="material-icons md-delete"></i>
@@ -80,7 +82,25 @@ deals.insertAdjacentHTML('afterbegin',
 }
 
 // обработчики удаления дела
+deleteItem();
 
+function deleteItem() {
+    let delete_icons = document.getElementsByClassName('md-delete');
+    let delete_map = [...delete_icons];
+    delete_map.map((el) => {
+        el.onclick = () => {
+        let wrap_task = el.parentNode;
+        wrap_task.style.display = 'none';
+        localStorage.removeItem(wrap_task.id);
+        }
+    });
+}
+
+// deals.addEventListener('click', (e) => {
+//     let thrash = e.target.closest('.md-delete');
+//     let wrap_task = thrash.parentNode;
+//     wrap_task.remove();
+// })
 
 // обработчики редактирования дела
 
