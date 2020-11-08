@@ -21,6 +21,7 @@ const button_plus: HTMLButtonElement = <HTMLButtonElement>(
 );
 const deals: HTMLDivElement = <HTMLDivElement>document.querySelector("#deals");
 
+const getPostRequest = 'http://isakura3131.zonopo.ru/deals';
 /*
 Функция добавления дела, котора вызвает функцию отрисовки
 и добавляет дело в LocalStorage
@@ -36,10 +37,30 @@ function addTask() {
 
   const todo_to_JSON = JSON.stringify(todo);
   console.table(todo);
-  localStorage.setItem(String(+todo.dt), todo_to_JSON);
-  GenerateDom(todo);
+  // localStorage.setItem(String(+todo.dt), todo_to_JSON);
+  GenerateDom(todo)
 
-  field.value = "";
+  // POST
+  let body = {
+    text: field.value,
+    dt: `${new Date().getDate()}-${new Date().getMonth()}-${new Date().getFullYear()}`,
+    priority: parseInt(select.value),
+    dl: date_picker.value
+  }
+
+  const headers = {
+    'Content-Type': 'application/json'
+  }
+  
+  return fetch(getPostRequest, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: headers
+  })
+  .then(data => console.log(data))
+  .then(() => {
+    field.value = '';
+  });
 }
 
 // назначение листенеров на нашу кнопку
@@ -52,28 +73,28 @@ document.addEventListener("keypress", (e) => {
 
 // функция отрисовки нашего приложения, когда оно включается
 //данные берутся из localStorage
-function draw_on_load() {
-  // эта функция сразу вызовется
-  // потом ее переменные вывезет GC
-  for (let i = 0; i < localStorage.length; i++) {
-    let lk_key = localStorage.key(i); // key по индексу получить значение
-    let content = localStorage.getItem(lk_key); // по ключу получаем значение
-    let todo = JSON.parse(content); // parse - метод расконсервации
-    GenerateDom(todo);
-  }
-}
+// function draw_on_load() {
+//   // эта функция сразу вызовется
+//   // потом ее переменные вывезет GC
+//   for (let i = 0; i < localStorage.length; i++) {
+//     let lk_key = localStorage.key(i); // key по индексу получить значение
+//     let content = localStorage.getItem(lk_key); // по ключу получаем значение
+//     let todo = JSON.parse(content); // parse - метод расконсервации
+//     GenerateDom(todo);
+//   }
+// }
 
-draw_on_load();
+// draw_on_load();
 
 /*
 Универсальная функция отрисовки, которая у нас вставляет todo в DOM
  */
 function GenerateDom(obj: Todo) {
-  let { priority, text, dt, dl } = obj;
+  let { id, priority, text, dt, dl } = obj;
   deals.insertAdjacentHTML(
     "afterbegin",
     `
-        <div class="wrap_task ${important_color[priority - 1]}" id="${dt}">
+        <div class="wrap_task ${important_color[priority - 1]}" id="${id}">
            <p class="todo_text"> ${text} </p>
             <p> ${new Date(dt).getDate()}/${new Date(
       obj.dt
@@ -97,7 +118,16 @@ function deleteItem() {
     el.onclick = () => {
       let wrap_task:HTMLDivElement = el.parentNode;
       wrap_task.style.display = "none";
-      localStorage.removeItem(wrap_task.id);
+      // localStorage.removeItem(wrap_task.id);
+
+
+      // DELETE
+      let delRequest = 'http://isakura3131.zonopo.ru/deal/';
+      let id = wrap_task.id;
+      return fetch(`${delRequest}${id}`, {
+        method: 'DELETE',
+      })
+      .then(data => console.log(data))
     };
   });
 }
@@ -111,3 +141,15 @@ function deleteItem() {
 // })
 
 // обработчики редактирования дела
+
+
+// отрисовка из бд
+fetch(getPostRequest)
+.then(response => response.json())
+.then(json => {
+  for(let key of json) {
+    let todo = key;
+    GenerateDom(todo);
+    console.log(key);
+  }
+})
